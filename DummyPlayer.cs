@@ -101,9 +101,6 @@ internal class DummyPlayer
         this.RoamPos = Vector2.Zero;
         this.NextRoamTime = DateTime.MinValue;
         this.ProjCycleIdx = new Dictionary<int, int>();
-
-        // 开门帮助工具
-        TSPlayer.TPlayer.doorHelper = new DoorOpeningHelper();
     }
 
     #region 发送网络包（自动填充玩家索引）
@@ -118,6 +115,8 @@ internal class DummyPlayer
     #region 关闭假人连接并释放资源
     public void Close()
     {
+        AutoAttack.MyProj.RemoveAll(p => p.fake == this);
+
         this.IsPlaying = false;
         this.Active = false;
         this.client?.Close();

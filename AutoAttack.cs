@@ -478,6 +478,9 @@ public static class AutoAttack
         var proj = args.Projectile;
         if (proj == null || !proj.active) return;
 
+        // 先移除所有已经失效的记录（轻量级，每帧只检查当前弹幕）
+        MyProj.RemoveAll(rec => rec.Idx == proj.whoAmI && (rec.fake == null || !rec.fake.Active));
+
         // 查找对应的弹幕状态记录
         var rec = MyProj.FirstOrDefault(p => p != null && p.Idx == proj.whoAmI && p.Owner == proj.owner);
         if (rec == null) return;

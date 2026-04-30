@@ -258,7 +258,7 @@ internal static class DummyWork
         if (blocked)
         {
             Point badTile = new Point((int)(plr.Center.X / 16), (int)(plr.Center.Y / 16));
-            if (!BadSpots.Contains(badTile)) BadSpots.Add(badTile);
+            AddBadSpot(badTile);
         }
 
         // ---- 垂直移动（仅在未受阻时处理跳跃/下落） ----

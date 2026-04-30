@@ -1,15 +1,12 @@
 ﻿extern alias TrAlias;
 using Microsoft.Xna.Framework;
-using Org.BouncyCastle.Asn1.X509;
 using Terraria;
 using Terraria.ID;
 using TerrariaApi.Server;
 using TShockAPI;
 using TShockAPI.DB;
 using TShockAPI.Hooks;
-using static FakePlayer.DummyPlayer;
 using static FakePlayer.Utils;
-using static TShockAPI.GetDataHandlers;
 
 namespace FakePlayer;
 
@@ -179,8 +176,7 @@ public class Plugin(Main game) : TerrariaPlugin(game)
         if (npc.friendly || npc.townNPC || npc.catchItem > 0) return;
         if (npc.type == NPCID.TargetDummy || npc.SpawnedFromStatue) return;
 
-        if (!ActiveNPCs.Contains(npc))
-            ActiveNPCs.Add(npc);
+        AddActiveNPC(npc);
     }
 
     private void OnNpcKilled(NpcKilledEventArgs args)
@@ -240,6 +236,12 @@ public class Plugin(Main game) : TerrariaPlugin(game)
     {
         Tick++;
 
+        // 每10秒清理弹幕记录
+        if (Tick % 600 == 0)
+        {
+            ClearProj();
+        }
+
         for (int i = 0; i < Fakes.Length; i++)
         {
             var dp = Fakes[i];
@@ -260,6 +262,48 @@ public class Plugin(Main game) : TerrariaPlugin(game)
 
             dp.LastAction = Tick;
         }
+    }
+    #endregion
+
+    #region 限制静态列表大小
+    public static void AddBadSpot(Point p)
+    {
+        // 避免重复添加
+        if (BadSpots.Contains(p)) return; 
+        BadSpots.Add(p);
+
+        // 移除最早添加的坏点
+        while (BadSpots.Count > 50)
+            BadSpots.RemoveAt(0); 
+    }
+
+    public static void AddActiveNPC(NPC npc)
+    {
+        // 避免重复添加
+        if (ActiveNPCs.Contains(npc)) return;
+        ActiveNPCs.Add(npc);
+
+        // 超过 50 个时，移除最早添加的npc
+        while (ActiveNPCs.Count > 50)
+            ActiveNPCs.RemoveAt(0);
+    }
+
+    public static void ClearProj()
+    {
+        AutoAttack.MyProj.RemoveAll(rec =>
+        {
+            if (rec == null) return true;
+            // 获取弹幕
+            if (rec.Idx < 0 || rec.Idx >= Main.maxProjectiles) return true;
+            var proj = Main.projectile[rec.Idx];
+
+            // 弹幕不存在、不活跃、或所有者不匹配 -> 清理
+            if (proj == null || !proj.active || proj.owner != rec.Owner) return true;
+            // 假人已断开也不保留
+            if (rec.fake == null || !rec.fake.Active) return true;
+
+            return false;
+        });
     }
     #endregion
 }
