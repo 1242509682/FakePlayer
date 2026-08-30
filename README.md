@@ -33,7 +33,7 @@
 ## 更新日志
 v1.0.6
 适配Terraria 1458
-新增依赖项：[修复Shock层内存泄露](https://github.com/1242509682/FixShock/releases)
+新增依赖项：[修复Shock内存泄露](https://github.com/1242509682/FixShock/releases)
 引用TS群管理员“淞猫”的[TrProtocol协议库](https://github.com/CedaryCat/TrProtocol)
 
 v1.0.5
