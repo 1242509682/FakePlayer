@@ -1,8 +1,7 @@
 # FakePlayer 假人插件
 - 作者: 少司命 羽学
 - 出处: TShock官方群816771079
-- 这是一个Tshock服务器插件，主要用于：
-采用冲冲的TrProtocol协议实现假人插件（从少司命的Dummy抄来的）
+- 这是一个Tshock服务器插件，主要用于：采用淞猫的TrProtocol协议实现假人插件（从少司命的Dummy抄来的）
 
 
 ## 指令
@@ -32,10 +31,9 @@
 - tshock/假人插件/假人/**.json文件中的【密码】
 
 ## 更新日志
-```
 v1.0.6
 适配Terraria 1458
-尝试修复Shock层内存泄露
+新增依赖项：[修复Shock层内存泄露](https://github.com/1242509682/FixShock/releases)
 引用TS群管理员“淞猫”的[TrProtocol协议库](https://github.com/CedaryCat/TrProtocol)
 
 v1.0.5
@@ -82,9 +80,6 @@ v1.0.1
 优化/fake re 指令支持创建假人
 不再依赖失效的：
 On.Terraria.Netplay.OpenPort钩子
-```
 
 ## 反馈
-- 优先发issued -> 共同维护的插件库：https://github.com/UnrealMultiple/TShockPlugin
-- 次优先：TShock官方群：816771079
-- 大概率看不到但是也可以：国内社区trhub.cn ，bbstr.net , tr.monika.love
+- TShock官方群：816771079
