@@ -1,10 +1,9 @@
 ﻿extern alias TrAlias;
 using System.Net;
-using Terraria.ID;
+using System.Runtime.Intrinsics.Arm;
+using Terraria;
 using TrAlias.TrProtocol.NetPackets;
 using TShockAPI;
-using Terraria.GameContent;
-using Microsoft.Xna.Framework;
 using static FakePlayer.Plugin;
 using ClientHello = TrAlias.TrProtocol.NetPackets.ClientHello;
 using ClientUUID = TrAlias.TrProtocol.NetPackets.ClientUUID;
@@ -17,8 +16,8 @@ using NetworkText = TrAlias.Terraria.Localization.NetworkText;
 using PlayerActive = TrAlias.TrProtocol.NetPackets.PlayerActive;
 using PlayerHealth = TrAlias.TrProtocol.NetPackets.PlayerHealth;
 using PlayerMana = TrAlias.TrProtocol.NetPackets.PlayerMana;
-using Point = Microsoft.Xna.Framework.Point;
 using Point16 = TrAlias.Terraria.DataStructures.Point16;
+using ProjectileKey = TrAlias.Terraria.DataStructures.ProjectileKey;
 using RequestPassword = TrAlias.TrProtocol.NetPackets.RequestPassword;
 using RequestTileData = TrAlias.TrProtocol.NetPackets.RequestTileData;
 using RequestWorldInfo = TrAlias.TrProtocol.NetPackets.RequestWorldInfo;
@@ -35,6 +34,8 @@ using TrPlayerSpawnContext = TrAlias.Terraria.PlayerSpawnContext;
 using TrPoint = TrAlias.Microsoft.Xna.Framework.Point;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 using WorldData = TrAlias.TrProtocol.NetPackets.WorldData;
+using TrVector2 = TrAlias.Microsoft.Xna.Framework.Vector2;
+using BitsByte = TrAlias.Terraria.BitsByte;
 
 namespace FakePlayer;
 
@@ -302,13 +303,29 @@ internal class DummyPlayer
     }
     #endregion
 
+    #region 发送同步弹幕包
+    internal void SyncProj(short whoAmI, Vector2 pos, Vector2 vel, int type, int dmg = 0, float kb = 0)
+    {
+        this.SendPacket(new SyncProjectile
+        {
+            Key = new ProjectileKey(PlayerSlot, whoAmI, Projectile.slotGenerations[whoAmI]),
+            Position = new TrVector2(pos.X,pos.Y),
+            Velocity = new TrVector2(vel.X,vel.Y),
+            ProjType = (short)type,
+            Bit1 = new BitsByte { [0] = true, [1] = true, [4] = true },
+            Damage = (short)dmg,
+            Knockback = kb
+        });
+    }
+    #endregion
+
     #region 发送移除弹幕包
     internal void KillProj(short whoAmI)
     {
         this.SendPacket(new KillProjectile
         {
-            PlayerSlot = this.PlayerSlot,
-            ProjSlot = whoAmI
+            Key = new ProjectileKey(PlayerSlot, whoAmI, Projectile.slotGenerations[whoAmI]),
+            FinalPosition = new TrVector2(Main.projectile[whoAmI].position.X, Main.projectile[whoAmI].position.Y)
         });
     }
     #endregion
@@ -318,7 +335,8 @@ internal class DummyPlayer
     {
         this.SendPacket(new StrikeNPC
         {
-            NPCSlot = (short)npc.whoAmI,
+            NPCSlot = (byte)npc.whoAmI,
+            NPCGeneration = npc.generation,
             Damage = (short)da,
             Knockback = kb,
             HitDirection = (byte)(this.TSPlayer.TPlayer.Center.X < npc.Center.X ? 1 : 0),

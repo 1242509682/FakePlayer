@@ -9,8 +9,6 @@ using TrAlias.TrProtocol.NetPackets;
 using TShockAPI;
 using static FakePlayer.DummyWork;
 using static FakePlayer.Plugin;
-using BitsByte = TrAlias.Terraria.BitsByte;
-using TrVector2 = TrAlias.Microsoft.Xna.Framework.Vector2;
 
 namespace FakePlayer;
 
@@ -20,7 +18,7 @@ public class ProjSpawnCfg
 {
     [JsonProperty("弹幕名", Order = 1)] public string Name { get; set; } = "";     // 弹幕显示名（自动填写）
     [JsonProperty("弹幕ID", Order = 2)] public int Type = -1;                      // -1 继承武器弹幕类型ID
-    [JsonProperty("以NPC为中心", Order = 3)] public bool NpcCenter = false;    
+    [JsonProperty("以NPC为中心", Order = 3)] public bool NpcCenter = false;
     [JsonProperty("伤害", Order = 3)] public int Dmg = -1;                         // -1 继承武器伤害
     [JsonProperty("击退", Order = 4)] public float Kb = -1f;                       // -1 继承武器击退
     [JsonProperty("持续时间帧", Order = 5)] public int Life = 180;                 // 存活帧数
@@ -167,27 +165,17 @@ public static class AutoAttack
     #endregion
 
     #region Strike - 生成伤害方法
-    private static void Strike(DummyPlayer dp, NPC npc, Player plr, Item wpn, int type, int da, float kb, bool crit, Vector2 vel)
+    private static void Strike(DummyPlayer dp, NPC npc, Player plr, Item wpn, int type, int dmg, float kb, bool crit, Vector2 vel)
     {
         // 已发射自定义弹幕，不再执行原版攻击逻辑
-        if (AutoAttack.TryShoot(dp, npc, plr, wpn, vel, da, kb)) return;
+        if (TryShoot(dp, npc, plr, wpn, vel, dmg, kb)) return;
 
-        short slot = (short)Projectile.NewProjectile(plr.GetProjectileSource_Item(wpn),
-                     plr.Center, vel, type, da, kb, dp.PlayerSlot);
+        var slot = Projectile.NewProjectile(plr.GetProjectileSource_Item(wpn),
+                     plr.Center, vel, type, dmg, kb, Main.myPlayer);
 
         if (slot is not < 0 and not >= Main.maxProjectiles)
         {
-            dp.SendPacket(new SyncProjectile
-            {
-                ProjSlot = slot,
-                PlayerSlot = dp.PlayerSlot,
-                Position = GetV2(plr.position.X, plr.position.Y),
-                Velocity = GetV2(vel.X, vel.Y),
-                ProjType = (short)type,
-                Bit1 = new BitsByte { [0] = true, [1] = true, [4] = true },
-                Damage = (short)da,
-                Knockback = kb
-            });
+            dp.SyncProj((short)slot, plr.position, vel, type, dmg, kb);
 
             if (wpn.magic || wpn.ranged)
             {
@@ -197,16 +185,16 @@ public static class AutoAttack
                     fake = dp,
                     Owner = dp.PlayerSlot,
                     Idx = slot,
-                    Dmg = da,
+                    Dmg = dmg,
                     Kb = kb,
                     UpList = null,
                     CurUp = 0,
                     NextUp = DateTime.MaxValue
                 });
             }
-
-            // 近战武器直接造成伤害
-            dp.StrikeNPC(npc, da, kb, crit);
+            else
+                // 近战武器直接造成伤害
+                dp.StrikeNPC(npc, dmg, kb, crit);
         }
     }
     #endregion
@@ -397,7 +385,7 @@ public static class AutoAttack
         for (int i = 0; i < vels.Count; i++)
         {
             // 生成弹幕时伤害强制为0，避免原版造成伤害
-            int slot = Projectile.NewProjectile(plr.GetProjectileSource_Item(plr.inventory[0]),
+            var slot = Projectile.NewProjectile(plr.GetProjectileSource_Item(plr.inventory[0]),
                        poses[i], vels[i], type, 0, kb, dp.PlayerSlot);
             if (slot < 0 || slot >= Main.maxProjectiles) continue;
 
@@ -406,17 +394,7 @@ public static class AutoAttack
             proj.friendly = true;       // 设为友方，但伤害为0故实际无害
 
             // 发送弹幕同步包给所有客户端（保证伤害同步为0）
-            dp.SendPacket(new SyncProjectile
-            {
-                ProjSlot = (short)slot,
-                PlayerSlot = dp.PlayerSlot,
-                Position = new TrVector2(proj.position.X, proj.position.Y),
-                Velocity = new TrVector2(proj.velocity.X, proj.velocity.Y),
-                ProjType = (short)type,
-                Bit1 = new BitsByte { [0] = true, [1] = true, [4] = true },
-                Damage = 0,
-                Knockback = kb
-            });
+            dp.SyncProj((short)slot, proj.position, proj.velocity, type, 0, kb);
 
             // 加载更新配置（如果配置了 UpList）
             List<ProjUpdCfg>? upList = null;
@@ -449,7 +427,7 @@ public static class AutoAttack
     }
 
     /// <summary>假人攻击时调用，尝试发射自定义弹幕</summary>
-    internal static bool TryShoot(DummyPlayer dp, NPC npc, Player plr, Item wpn, Vector2 aim,int wpnDmg, float wpnKb)
+    internal static bool TryShoot(DummyPlayer dp, NPC npc, Player plr, Item wpn, Vector2 aim, int wpnDmg, float wpnKb)
     {
         // 初始化武器循环索引字典（若为null）
         if (dp.ProjCycleIdx == null) dp.ProjCycleIdx = new Dictionary<int, int>();
@@ -614,19 +592,7 @@ public static class AutoAttack
 
             // 若弹幕有任何变化，则向客户端发送同步包
             if (changed)
-            {
-                dp.SendPacket(new SyncProjectile
-                {
-                    ProjSlot = (short)rec.Idx,
-                    PlayerSlot = dp.PlayerSlot,
-                    Position = new TrVector2(proj.position.X, proj.position.Y),
-                    Velocity = new TrVector2(proj.velocity.X, proj.velocity.Y),
-                    ProjType = (short)proj.type,
-                    Bit1 = new BitsByte { [0] = true, [1] = true, [4] = true },
-                    Damage = 0,           // 始终保持0，避免原版伤害
-                    Knockback = rec.Kb
-                });
-            }
+                dp.SyncProj((short)rec.Idx, proj.position, proj.velocity, proj.type, 0, rec.Kb);
 
             // 移动到下一个更新阶段，并设定下次更新时间
             rec.CurUp++;

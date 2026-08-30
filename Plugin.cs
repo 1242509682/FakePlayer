@@ -245,7 +245,7 @@ public class Plugin(Main game) : TerrariaPlugin(game)
         for (int i = 0; i < Fakes.Length; i++)
         {
             var dp = Fakes[i];
-            if (dp == null || !dp.Active || !dp.IsPlaying) continue;
+            if (dp == null || !dp.Active || !dp.IsPlaying || dp.TSPlayer == null || !dp.TSPlayer.Active) continue;
 
             // 递减武器冷却
             if (dp.UseTime > 0) dp.UseTime--;

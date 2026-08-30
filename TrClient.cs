@@ -12,6 +12,7 @@ public class TrClient
     private BinaryReader? br;
     private BinaryWriter? bw;
     private readonly PacketSerializer mgr = new(true);
+    public bool Connected => client?.Connected == true;
 
     public void Connect(string hostname, int port)
     {

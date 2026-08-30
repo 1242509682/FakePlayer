@@ -105,8 +105,8 @@ internal static class DummyWork
         dp.SendPacket(new PlayerControls
         {
             PlayerSlot = dp.PlayerSlot,
-            Position = GetV2(plr.position),
-            Velocity = GetV2(vel),
+            Position = new TrVector2(plr.position.X, plr.position.Y),
+            Velocity = new TrVector2(vel.X,vel.Y),
             SelectedItem = SelSlot,
             PlayerControlData = ctrl,
             PlayerMiscData1 = misc1,
@@ -433,8 +433,8 @@ internal static class DummyWork
         dp.SendPacket(new PlayerControls
         {
             PlayerSlot = dp.PlayerSlot,
-            Position = GetV2(plr.position.X, plr.position.Y),
-            Velocity = GetV2(plr.velocity.X, plr.velocity.Y),
+            Position = new TrVector2(plr.position.X, plr.position.Y),
+            Velocity = new TrVector2(plr.velocity.X, plr.velocity.Y),
             PlayerControlData = c,
             PlayerMiscData2 = m
         });
@@ -734,16 +734,6 @@ internal static class DummyWork
     #endregion
 
     #region GetV2 - 向量转换辅助方法
-    /// <summary>
-    /// 将 XNA Vector2 转换为 TrProtocol 使用的 TrVector2。
-    /// </summary>
-    public static TrVector2 GetV2(Vector2 e) => new(e.X, e.Y);
-
-    /// <summary>
-    /// 将两个浮点数转换为 TrVector2。
-    /// </summary>
-    public static TrVector2 GetV2(float x, float y) => new(x, y);
-
     /// <summary>
     /// 将 TrProtocol 使用的 Color 转换为 XNA Color。
     /// </summary>

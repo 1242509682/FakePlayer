@@ -20,7 +20,7 @@ internal class Configuration
     [JsonProperty("默认队伍", Order = 4)] 
     public int DefTeam { get; set; } = 4;
     [JsonProperty("人物版本", Order = 5)] 
-    public string Version { get; set; } = "Terraria319";
+    public string Version { get; set; } = "Terraria326";
     [JsonProperty("更新频率(帧)", Order = 6)] 
     public int UpdateTime { get; set; } = 20;
     [JsonProperty("触发移动格数", Order = 7)] 
