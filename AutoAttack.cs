@@ -5,9 +5,7 @@ using Newtonsoft.Json;
 using Terraria;
 using Terraria.ID;
 using TerrariaApi.Server;
-using TrAlias.TrProtocol.NetPackets;
 using TShockAPI;
-using static FakePlayer.DummyWork;
 using static FakePlayer.Plugin;
 
 namespace FakePlayer;

@@ -93,6 +93,11 @@ internal class MyCmd
         {
             CreateOne();
             SendMess(plr, "已创建一个新假人");
+
+            SendMess(plr, "\n《如果发现假人不动》");
+            SendMess(plr, "1.修改假人密码:/user password “名字” 123456");
+            SendMess(plr, "2.确认文件内的密码一致，以确保其正常登录：");
+            SendMess(plr, "登录密码位置：tshock/假人插件/假人/**.json");
             return;
         }
 

@@ -7,6 +7,7 @@ using TShockAPI;
 using TShockAPI.DB;
 using TShockAPI.Hooks;
 using static FakePlayer.Utils;
+using Netplay = OTAPI.Hooks.Netplay;
 
 namespace FakePlayer;
 
@@ -17,11 +18,12 @@ public class Plugin(Main game) : TerrariaPlugin(game)
     public static string PluginName => "假人插件";
     public override string Name => PluginName;
     public override string Author => "少司命、羽学";
-    public override Version Version => new(1, 0, 5);
+    public override Version Version => new(1, 0, 6);
     public override string Description => "在你的服务器中放置假人并实现跟随战斗与工作";
     #endregion
 
     #region 注册与释放
+    private EventHandler<Netplay.CreateTcpListenerEventArgs>? socketHook;
     public override void Initialize()
     {
         LoadConfig();
@@ -33,6 +35,12 @@ public class Plugin(Main game) : TerrariaPlugin(game)
         ServerApi.Hooks.NpcKilled.Register(this, OnNpcKilled);
         ServerApi.Hooks.ProjectileAIUpdate.Register(this, AutoAttack.UpdateProj);
         TShockAPI.Commands.ChatCommands.Add(new Command(MyCmd.prem, MyCmd.MainCmd, MyCmd.cmd, "f"));
+
+        if (Config.UsePoolSock)
+        {
+            socketHook = OnCreateListener;
+            Netplay.CreateTcpListener += socketHook;  // 订阅事件
+        }
     }
 
     protected override void Dispose(bool disposing)
@@ -47,6 +55,12 @@ public class Plugin(Main game) : TerrariaPlugin(game)
             ServerApi.Hooks.NpcKilled.Deregister(this, OnNpcKilled);
             ServerApi.Hooks.ProjectileAIUpdate.Deregister(this, AutoAttack.UpdateProj);
             TShockAPI.Commands.ChatCommands.RemoveAll(x => x.CommandDelegate == MyCmd.MainCmd);
+
+            if (socketHook != null)
+            {
+                Netplay.CreateTcpListener -= socketHook;
+                socketHook = null;
+            }
 
             // 1. 断开所有假人连接并清空数组
             for (int i = 0; i < Fakes.Length; i++)
@@ -89,6 +103,21 @@ public class Plugin(Main game) : TerrariaPlugin(game)
         {
             TShock.Log.ConsoleError($"[{PluginName}] 配置文件加载失败：\n{ex.Message}");
         }
+    }
+    #endregion
+
+    #region 减少内存分配和缓解网络层内存泄漏
+    /// <summary>
+    /// 挂钩服务器创建监听 Socket 的事件，将默认的 <see cref="TcpSocket"/> 替换为
+    /// 使用 <see cref="ArrayPool{T}"/> 优化的 <see cref="PoolSock"/>，
+    /// 以减少内存分配和缓解网络层内存泄漏。
+    /// </summary>
+    /// <param name="sender">事件发送者（通常为 null）。</param>
+    /// <param name="args">包含 <see cref="Netplay.CreateTcpListenerEventArgs.Result"/> 参数，
+    /// 用于设置自定义的 <see cref="ISocket"/> 实现。</param>
+    private void OnCreateListener(object? sender, Netplay.CreateTcpListenerEventArgs args)
+    {
+        args.Result = new PoolSock { EnforceMsgSize = true };
     }
     #endregion
 

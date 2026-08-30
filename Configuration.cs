@@ -11,6 +11,8 @@ internal class Configuration
     #region 配置项成员
     [JsonProperty("使用说明", Order = -100)]
     public List<string> UsageNotes { get; set; } = new List<string>();
+    [JsonProperty("修复Shock层内存泄露", Order = 0)]
+    public bool UsePoolSock { get; set; } = true;
     [JsonProperty("名称前缀", Order = 1)] 
     public string Names { get; set; } = "假人";
     [JsonProperty("自动注册", Order = 2)] 
@@ -83,6 +85,11 @@ internal class Configuration
             "2.使用指令/f re 创建一个假人",
             "3.用/f ap me all 把自身装备复制给假人",
             "4.再用/f me all 让所有假人跟随自己】",
+            "《如果发现假人站在原地不动》：",
+            "请使用指令修改假人密码:/user password “名字” 123456",
+            "可能有插件干扰自动注册，请确保假人与以下密码一致：",
+            "tshock/假人插件/假人/**.json文件中的【密码】",
+            
         ]);
     }
     #endregion
