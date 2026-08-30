@@ -36,7 +36,7 @@
 v1.0.6
 适配Terraria 1458
 尝试修复Shock层内存泄露
-引用TS群管理员“淞猫”的[TrProtocol协议库])(https://github.com/CedaryCat/TrProtocol)
+引用TS群管理员“淞猫”的[TrProtocol协议库](https://github.com/CedaryCat/TrProtocol)
 
 v1.0.5
 优化漫游寻路AI，碰壁则传送避免无意义内部计时
